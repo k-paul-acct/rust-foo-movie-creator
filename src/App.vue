@@ -299,7 +299,7 @@ async function cancel() {
   align-items: center;
   gap: 0.67rem;
   height: 32px;
-  padding: 8px 12px;
+  padding: 8px;
   border-radius: var(--app-button-radius);
   color: var(--app-text-muted);
   font-size: 0.9rem;
@@ -328,7 +328,7 @@ async function cancel() {
 
 .app-shell.sidebar-collapsed .sidebar,
 .app-shell.sidebar-collapsed .sidebar-collapse-area {
-  width: 64px;
+  width: 56px;
 }
 .app-shell.sidebar-collapsed .sidebar-logo,
 .app-shell.sidebar-collapsed .nav-item span,

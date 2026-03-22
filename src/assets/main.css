@@ -28,8 +28,8 @@
   --app-danger: var(--p-red-500);
   --app-info: var(--p-blue-500);
 
-  --app-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --app-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.2);
+  /*--app-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --app-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.2);*/
 
   --app-font: "Roboto", sans-serif;
   --app-mono: "Roboto Mono", monospace;
