@@ -33,6 +33,7 @@
 
   --app-font: "Roboto", sans-serif;
   --app-mono: "Roboto Mono", monospace;
+  --app-fs-badge-sm: 0.625rem;
 
   --transition: 150ms;
 }

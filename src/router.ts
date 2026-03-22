@@ -1,19 +1,19 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import Effects from "./views/Effects.vue";
 import Images from "./views/Images.vue";
-import Output from "./views/Output.vue";
+import Configuration from "./views/Configuration.vue";
 import Screensaver from "./views/Screensaver.vue";
 
 const routes = [
   {
     path: "/",
-    redirect: "/output",
+    redirect: "/configuration",
   },
   {
-    path: "/output",
-    name: "output",
-    component: Output,
-    meta: { title: "Output", icon: "pi-cog" },
+    path: "/configuration",
+    name: "configuration",
+    component: Configuration,
+    meta: { title: "Configuration", icon: "pi-cog" },
   },
   {
     path: "/images",

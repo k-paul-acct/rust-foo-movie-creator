@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { save } from "@tauri-apps/plugin-dialog";
 import Button from "primevue/button";
 import ConfirmDialog from "primevue/confirmdialog";
+import Tag from "primevue/tag";
 import Toast from "primevue/toast";
 import { computed, ref } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
@@ -16,15 +17,15 @@ const store = useAppStore();
 document.documentElement.classList.toggle("dark-mode", store.darkMode);
 
 const navItems = [
-  { path: "/output", label: "Output", icon: "pi-cog" },
-  { path: "/images", label: "Images", icon: "pi-images", badge: store.selectedImagesCount },
-  { path: "/screensaver", label: "Screensaver", icon: "pi-desktop" },
+  { path: "/configuration", label: "Configuration", icon: "pi-cog" },
+  { path: "/images", label: "Images", icon: "pi-images", badge: () => store.selectedImagesCount },
+  { path: "/screensaver", label: "Screensaver", icon: "pi-desktop", toggleBadge: () => store.screensaver.enabled },
   { path: "/effects", label: "Effects", icon: "pi-star" },
 ];
 
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
-    "/output": "Output",
+    "/configuration": "Configuration",
     "/images": "Images",
     "/screensaver": "Screensaver",
     "/effects": "Effects",
@@ -169,7 +170,19 @@ async function cancel() {
         >
           <i :class="['pi', item.icon]" />
           <span>{{ item.label }}</span>
-          <div v-if="item.badge" class="nav-badge">{{ item.badge }}</div>
+          <Tag
+            v-if="item.badge"
+            :value="item.badge()"
+            rounded
+            style="margin-left: auto; font-size: var(--app-fs-badge-sm)"
+          />
+          <Tag
+            v-if="item.toggleBadge"
+            :severity="item.toggleBadge() ? 'success' : 'danger'"
+            :value="item.toggleBadge() ? 'ON' : 'OFF'"
+            rounded
+            style="margin-left: auto; font-size: var(--app-fs-badge-sm)"
+          />
         </RouterLink>
       </nav>
     </aside>
@@ -312,23 +325,6 @@ async function cancel() {
 .nav-item .pi {
   font-size: 16px;
 }
-.nav-badge {
-  display: flex;
-  margin-left: auto;
-  background: var(--app-accent);
-  color: var(--app-accent-contrast);
-  font-size: 0.67rem;
-  font-weight: 700;
-  padding: 0 4px;
-  height: 16px;
-  min-width: 16px;
-  border-radius: 16px;
-  align-items: center;
-  justify-content: center;
-  transition:
-    opacity var(--transition),
-    visibility var(--transition);
-}
 
 .app-shell.sidebar-collapsed .sidebar,
 .app-shell.sidebar-collapsed .sidebar-collapse-area {
@@ -336,7 +332,6 @@ async function cancel() {
 }
 .app-shell.sidebar-collapsed .sidebar-logo,
 .app-shell.sidebar-collapsed .nav-item span,
-.app-shell.sidebar-collapsed .nav-badge,
 .app-shell.sidebar-collapsed .signout-btn {
   opacity: 0;
   visibility: hidden;
