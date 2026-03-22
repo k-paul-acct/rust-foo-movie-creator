@@ -1,0 +1,83 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --app-sidebar-width: 240px;
+  --app-header-height: 56px;
+  --app-radius: var(--p-content-border-radius);
+  --app-button-radius: var(--p-button-border-radius);
+
+  --app-surface: var(--p-content-background);
+  --app-overlay: var(--p-overlay-background);
+  --app-hover: var(--p-button-secondary-hover-background);
+  --app-hover-active: var(--p-button-secondary-background);
+  --app-border: var(--p-content-border-color);
+  --app-text: var(--p-text-color);
+  --app-text-muted: var(--p-text-muted-color);
+  --app-accent: var(--p-primary-color);
+  --app-accent-contrast: var(--p-primary-contrast-color);
+  --app-success: var(--p-green-500);
+  --app-warning: var(--p-yellow-500);
+  --app-danger: var(--p-red-500);
+  --app-info: var(--p-blue-500);
+
+  --app-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --app-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.2);
+
+  --app-font: "Roboto", sans-serif;
+  --app-mono: "Roboto Mono", monospace;
+
+  --transition: 150ms;
+}
+
+html,
+body,
+#app {
+  width: 100vw;
+  height: 100vh;
+
+  font-family: var(--app-font);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity var(--transition),
+    transform var(--transition);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
