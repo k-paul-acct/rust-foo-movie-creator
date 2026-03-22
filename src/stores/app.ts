@@ -55,7 +55,7 @@ export const useAppStore = defineStore("app", () => {
 
   const sidebarCollapsed = ref(false);
 
-  const darkMode = ref(true);
+  const darkMode = ref(false);
 
   const output = ref<OutputConfig>({
     outputPath: "",
