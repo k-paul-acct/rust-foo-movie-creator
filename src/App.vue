@@ -139,7 +139,11 @@ async function cancel() {
 </script>
 
 <template>
-  <div class="app-shell select-none" :class="{ 'sidebar-collapsed': store.sidebarCollapsed }">
+  <div
+    id="app-shell"
+    class="flex h-dvh overflow-hidden select-none"
+    :class="{ 'sidebar-collapsed': store.sidebarCollapsed }"
+  >
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo">
@@ -208,12 +212,6 @@ async function cancel() {
 </template>
 
 <style scoped>
-.app-shell {
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
-}
-
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -300,8 +298,7 @@ async function cancel() {
   padding: 8px;
   border-radius: var(--app-button-radius);
   color: var(--app-text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 1rem;
   text-decoration: none;
   overflow: hidden;
 }
@@ -324,13 +321,13 @@ async function cancel() {
   font-size: 16px;
 }
 
-.app-shell.sidebar-collapsed .sidebar,
-.app-shell.sidebar-collapsed .sidebar-collapse-area {
+#app-shell.sidebar-collapsed .sidebar,
+#app-shell.sidebar-collapsed .sidebar-collapse-area {
   width: 56px;
 }
-.app-shell.sidebar-collapsed .sidebar-logo,
-.app-shell.sidebar-collapsed .nav-item span,
-.app-shell.sidebar-collapsed .signout-btn {
+#app-shell.sidebar-collapsed .sidebar-logo,
+#app-shell.sidebar-collapsed .nav-item span,
+#app-shell.sidebar-collapsed .signout-btn {
   opacity: 0;
   visibility: hidden;
 }
@@ -353,7 +350,7 @@ async function cancel() {
 }
 .topbar-title {
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: 700;
   flex: 1;
 }
 .topbar-actions {
@@ -369,7 +366,6 @@ async function cancel() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: transparent;
   border: 1px solid var(--app-border);
   border-radius: var(--app-button-radius);
   color: var(--app-text-muted);

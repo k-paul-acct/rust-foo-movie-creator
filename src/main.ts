@@ -1,4 +1,3 @@
-import { definePreset, palette } from "@primeuix/themes";
 import Aura from "@primeuix/themes/aura";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
@@ -12,7 +11,6 @@ import App from "./App.vue";
 import "./assets/main.css";
 import router from "./router";
 
-const appPreset = definePreset(Aura);
 // const appPreset = definePreset(Aura, {
 //   semantic: {
 //     colorScheme: {
@@ -41,7 +39,7 @@ app.use(pinia);
 app.use(router);
 app.use(PrimeVue, {
   theme: {
-    preset: appPreset,
+    preset: Aura,
     options: {
       prefix: "p",
       darkModeSelector: ".dark-mode",
