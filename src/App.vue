@@ -8,34 +8,31 @@ import Tag from "primevue/tag";
 import Toast from "primevue/toast";
 import { computed, ref } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
-import { useAppStore } from "./stores/app";
+import { useAppStore, useSettingsStore } from "./stores/app";
 import type { ProgressPayload } from "./types";
 
 const route = useRoute();
 const store = useAppStore();
+const settingsStore = useSettingsStore();
 
-document.documentElement.classList.toggle("dark-mode", store.darkMode);
+document.documentElement.classList.toggle("dark-mode", settingsStore.darkMode);
 
 const navItems = [
   { path: "/configuration", label: "Configuration", icon: "pi-cog" },
-  { path: "/images", label: "Images", icon: "pi-images", badge: () => store.selectedImagesCount },
   { path: "/screensaver", label: "Screensaver", icon: "pi-desktop", toggleBadge: () => store.screensaver.enabled },
-  { path: "/effects", label: "Effects", icon: "pi-star" },
 ];
 
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     "/configuration": "Configuration",
-    "/images": "Images",
     "/screensaver": "Screensaver",
-    "/effects": "Effects",
   };
   return titles[route.path] ?? store.settings.appName;
 });
 
 function toggleDark() {
-  store.darkMode = !store.darkMode;
-  document.documentElement.classList.toggle("dark-mode", store.darkMode);
+  settingsStore.darkMode = !settingsStore.darkMode;
+  document.documentElement.classList.toggle("dark-mode", settingsStore.darkMode);
 }
 
 const isGenerating = ref(false);
@@ -89,7 +86,7 @@ async function generate() {
         fps: store.output.fps,
         quality: store.output.quality,
         transition: store.output.transition,
-        transition_dur: store.output.transitionDuration,
+        transition_dur: store.output.duration,
         images: store.images.images.filter((i) => i.selected).map((i) => i.path),
         effects: store.effects.enabledEffects,
         min_dur: store.effects.minDuration,
@@ -142,7 +139,7 @@ async function cancel() {
 </script>
 
 <template>
-  <div class="app-shell" :class="{ 'sidebar-collapsed': store.sidebarCollapsed }">
+  <div class="app-shell select-none" :class="{ 'sidebar-collapsed': store.sidebarCollapsed }">
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-logo">
@@ -154,7 +151,7 @@ async function cancel() {
         <div class="sidebar-collapse-area">
           <Button
             :icon="store.sidebarCollapsed ? 'pi pi-arrow-right' : 'pi pi-arrow-left'"
-            text
+            variant="text"
             severity="secondary"
             @click="store.sidebarCollapsed = !store.sidebarCollapsed"
           />
@@ -170,12 +167,12 @@ async function cancel() {
         >
           <i :class="['pi', item.icon]" />
           <span>{{ item.label }}</span>
-          <Tag
+          <!-- <Tag
             v-if="item.badge"
             :value="item.badge()"
             rounded
             style="margin-left: auto; font-size: var(--app-fs-badge-sm)"
-          />
+          />  -->
           <Tag
             v-if="item.toggleBadge"
             :severity="item.toggleBadge() ? 'success' : 'danger'"
@@ -192,7 +189,7 @@ async function cancel() {
         <div class="topbar-title">{{ pageTitle }}</div>
         <div class="topbar-actions">
           <div class="theme-toggle" @click="toggleDark">
-            <i :class="['pi', store.darkMode ? 'pi-moon' : 'pi-sun']" />
+            <i :class="['pi', settingsStore.darkMode ? 'pi-moon' : 'pi-sun']" />
           </div>
         </div>
       </header>
@@ -278,12 +275,13 @@ async function cancel() {
   background: var(--app-surface);
   width: 56px;
   height: 32px;
-  padding: 12px;
+  padding: 0 12px;
   z-index: 1;
   transition: width var(--transition);
 }
 .sidebar-collapse-area :deep(.p-button) {
   width: 100%;
+  height: 100%;
 }
 
 .sidebar-nav {

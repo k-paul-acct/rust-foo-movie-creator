@@ -11,11 +11,15 @@
   },
   "dependencies": {
     "@primeuix/themes": "^2.0.3",
+    "@tailwindcss/vite": "^4.2.2",
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "pinia": "^3.0.4",
+    "pinia-plugin-persistedstate": "^4.7.1",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",
+    "tailwindcss": "^4.2.2",
+    "tailwindcss-primeui": "^0.6.1",
     "vue": "^3.5.30",
     "vue-router": "^5.0.4"
   },

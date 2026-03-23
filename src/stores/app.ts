@@ -46,25 +46,30 @@ export const TRANSITIONS = [
   { value: "pixelize", label: "Pixelize" },
 ];
 
+export const useSettingsStore = defineStore("settings", {
+  state: () => ({ darkMode: false }),
+  persist: true,
+});
+
 export const useAppStore = defineStore("app", () => {
   const settings = ref({
     appName: "Foo Movie",
     language: "en",
-    theme: "dark",
   });
 
   const sidebarCollapsed = ref(false);
 
-  const darkMode = ref(false);
+  const ffmpegVersion = ref<string | null>();
+  const ffmpegError = ref<string | null>();
 
   const output = ref<OutputConfig>({
     outputPath: "",
-    codec: "libx264",
+    codec: CODECS[0],
     resolution: RESOLUTIONS[2],
     fps: 30,
     quality: 23,
     transition: "fade",
-    transitionDuration: 0.5,
+    duration: 30,
   });
 
   const images = ref<ImagesConfig>({
@@ -118,7 +123,8 @@ export const useAppStore = defineStore("app", () => {
   return {
     settings,
     sidebarCollapsed,
-    darkMode,
+    ffmpegVersion,
+    ffmpegError,
     output,
     images,
     selectedImagesCount,

@@ -4,14 +4,19 @@ export interface Resolution {
   label: string;
 }
 
+export interface Codec {
+  value: string;
+  label: string;
+}
+
 export interface OutputConfig {
   outputPath: string;
-  codec: string;
+  codec: Codec;
   resolution: Resolution;
   fps: number;
   quality: number;
   transition: TransitionType;
-  transitionDuration: number;
+  duration: number;
 }
 
 export type TransitionType =

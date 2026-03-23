@@ -1,6 +1,7 @@
 import { definePreset, palette } from "@primeuix/themes";
 import Aura from "@primeuix/themes/aura";
 import { createPinia } from "pinia";
+import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import "primeicons/primeicons.css";
 import PrimeVue from "primevue/config";
 import ConfirmationService from "primevue/confirmationservice";
@@ -11,28 +12,32 @@ import App from "./App.vue";
 import "./assets/main.css";
 import router from "./router";
 
-const appPreset = definePreset(Aura, {
-  semantic: {
-    colorScheme: {
-      light: {
-        semantic: {
-          primary: palette("{indigo}"),
-          surface: palette("{zink}"),
-        },
-      },
-      dark: {
-        semantic: {
-          primary: palette("{indigo}"),
-          surface: palette("{zink}"),
-        },
-      },
-    },
-  },
-});
+const appPreset = definePreset(Aura);
+// const appPreset = definePreset(Aura, {
+//   semantic: {
+//     colorScheme: {
+//       light: {
+//         semantic: {
+//           primary: palette("{zink}"),
+//           surface: palette("{zink}"),
+//         },
+//       },
+//       dark: {
+//         semantic: {
+//           primary: palette("{indigo}"),
+//           surface: palette("{slate}"),
+//         },
+//       },
+//     },
+//   },
+// });
 
 const app = createApp(App);
 
-app.use(createPinia());
+const pinia = createPinia();
+pinia.use(piniaPluginPersistedstate);
+
+app.use(pinia);
 app.use(router);
 app.use(PrimeVue, {
   theme: {
