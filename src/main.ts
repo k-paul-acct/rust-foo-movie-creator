@@ -4,6 +4,7 @@ import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import "primeicons/primeicons.css";
 import PrimeVue from "primevue/config";
 import ConfirmationService from "primevue/confirmationservice";
+import KeyFilter from "primevue/keyfilter";
 import ToastService from "primevue/toastservice";
 import Tooltip from "primevue/tooltip";
 import { createApp } from "vue";
@@ -50,5 +51,6 @@ app.use(PrimeVue, {
 app.use(ToastService);
 app.use(ConfirmationService);
 app.directive("tooltip", Tooltip);
+app.directive("keyfilter", KeyFilter);
 
 app.mount("#app");

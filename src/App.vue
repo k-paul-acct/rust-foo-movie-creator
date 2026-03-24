@@ -102,10 +102,8 @@ async function generate() {
               max_size: store.screensaver.maxSize,
               min_speed: store.screensaver.minSpeed,
               max_speed: store.screensaver.maxSpeed,
-              bg_r: store.screensaver.backgroundColor.r,
-              bg_g: store.screensaver.backgroundColor.g,
-              bg_b: store.screensaver.backgroundColor.b,
-              colors: store.screensaver.shapeColors.map((c) => [c.r, c.g, c.b, c.a]),
+              bg_color: store.screensaver.backgroundColor,
+              colors: store.screensaver.shapeColors.map((c) => [c.color, c.a]),
               blur_edges: store.screensaver.blurEdges,
               seed: store.screensaver.seed,
             }

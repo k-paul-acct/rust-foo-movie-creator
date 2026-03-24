@@ -75,9 +75,8 @@ export interface EffectsConfig {
 export type ShapeType = "circle" | "rectangle" | "mixed";
 
 export interface ShapeColor {
-  r: number;
-  g: number;
-  b: number;
+  id: number;
+  color: string;
   a: number;
 }
 
@@ -89,7 +88,7 @@ export interface ScreensaverConfig {
   maxSize: number;
   minSpeed: number;
   maxSpeed: number;
-  backgroundColor: ShapeColor;
+  backgroundColor: string;
   shapeColors: ShapeColor[];
   blurEdges: boolean;
   seed: number | null;

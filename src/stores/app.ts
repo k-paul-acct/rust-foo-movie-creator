@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import type { EffectEntry, EffectsConfig, ImagesConfig, OutputConfig, ScreensaverConfig } from "../types";
 
 export const EFFECT_ENTRIES: EffectEntry[] = [
@@ -95,21 +95,57 @@ export const useAppStore = defineStore("app", () => {
     enabled: false,
     shapeType: "mixed",
     shapeCount: 10,
-    minSize: 50,
-    maxSize: 150,
-    minSpeed: 30,
-    maxSpeed: 120,
-    backgroundColor: { r: 32, g: 32, b: 32, a: 255 },
+    minSize: 25,
+    maxSize: 75,
+    minSpeed: 25,
+    maxSpeed: 75,
+    backgroundColor: "202020",
     shapeColors: [
-      { r: 255, g: 116, b: 108, a: 192 },
-      { r: 128, g: 239, b: 128, a: 192 },
-      { r: 179, g: 235, b: 242, a: 192 },
-      { r: 255, g: 238, b: 140, a: 192 },
-      { r: 179, g: 158, b: 181, a: 192 },
+      { id: -1, color: "ff746c", a: 75 },
+      { id: -2, color: "80ef80", a: 75 },
+      { id: -3, color: "b3ebf2", a: 75 },
+      { id: -4, color: "ffee8c", a: 75 },
+      { id: -5, color: "b39eb5", a: 75 },
     ],
     blurEdges: true,
     seed: null,
   });
+
+  watch(
+    () => screensaver.value.minSize,
+    (newMin) => {
+      if (newMin > screensaver.value.maxSize) {
+        screensaver.value.maxSize = newMin;
+      }
+    },
+  );
+
+  watch(
+    () => screensaver.value.maxSize,
+    (newMax) => {
+      if (newMax < screensaver.value.minSize) {
+        screensaver.value.minSize = newMax;
+      }
+    },
+  );
+
+  watch(
+    () => screensaver.value.minSpeed,
+    (newMin) => {
+      if (newMin > screensaver.value.maxSpeed) {
+        screensaver.value.maxSpeed = newMin;
+      }
+    },
+  );
+
+  watch(
+    () => screensaver.value.maxSpeed,
+    (newMax) => {
+      if (newMax < screensaver.value.minSpeed) {
+        screensaver.value.minSpeed = newMax;
+      }
+    },
+  );
 
   function validate(): string[] {
     const errs: string[] = [];
