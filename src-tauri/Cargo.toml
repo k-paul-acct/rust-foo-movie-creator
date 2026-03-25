@@ -1,0 +1,32 @@
+[package]
+name = "foo-movie"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+edition = "2024"
+
+[lib]
+name = "foo_movie_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2.6.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1.50.0", features = ["full"] }
+rand = "0.10.0"
+rayon = "1.11.0"
+anyhow = "1.0.102"
+regex = "1.12.3"
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "bmp", "tiff", "webp"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
