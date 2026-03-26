@@ -10,9 +10,227 @@ import InputText from "primevue/inputtext";
 import Select from "primevue/select";
 import Slider from "primevue/slider";
 import ToggleSwitch from "primevue/toggleswitch";
+import { onMounted, onUnmounted, ref, watch } from "vue";
 import { useAppStore } from "../stores/app";
+import { ShapeColor } from "../types";
+import { rng } from "../utils/rng";
 
 const store = useAppStore();
+
+const canvasPreview = ref<HTMLCanvasElement | null>(null);
+let animId = 0;
+let lastTime = 0;
+
+onMounted(() => {
+  if (store.screensaver.enabled) startPreview();
+});
+
+onUnmounted(() => cancelAnimationFrame(animId));
+
+watch(
+  () => store.screensaver.enabled,
+  (v) => {
+    if (v) startPreview();
+    else cancelAnimationFrame(animId);
+  },
+);
+
+watch(
+  () => [store.screensaver.shapeType, store.screensaver.shapeCount, store.screensaver.seed],
+  () => {
+    if (store.screensaver.enabled) buildShapes();
+  },
+);
+
+watch(
+  () => [store.screensaver.minSize, store.screensaver.maxSize, store.screensaver.minSpeed, store.screensaver.maxSpeed],
+  () => {
+    if (store.screensaver.enabled) updateShapesSizeAndSpeed();
+  },
+);
+
+watch(
+  () => [store.screensaver.shapeColors],
+  () => {
+    if (store.screensaver.enabled) updateShapesColors();
+  },
+);
+
+interface AnimShape {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  horizontalOrientation: boolean;
+  color: ShapeColor;
+  isCircle: boolean;
+}
+
+let shapesGenSeed = 0;
+let shapes: AnimShape[] = [];
+
+function updateShapesSizeAndSpeed() {
+  const cfg = store.screensaver;
+  const nextRand = rng(shapesGenSeed);
+
+  for (const sh of shapes) {
+    const size = (cfg.minSize + nextRand() * (cfg.maxSize - cfg.minSize)) / 100;
+    const speed = (cfg.minSpeed + nextRand() * (cfg.maxSpeed - cfg.minSpeed)) / 100;
+    const angle = nextRand() * 2 * Math.PI;
+
+    sh.size = size;
+    sh.vx = Math.cos(angle) * speed;
+    sh.vy = Math.sin(angle) * speed;
+
+    for (let i = 0; i < 5; ++i) {
+      nextRand();
+    }
+  }
+}
+
+function updateShapesColors() {
+  const cfg = store.screensaver;
+
+  for (const sh of shapes) {
+    if (cfg.shapeColors.indexOf(sh.color) === -1) {
+      fullUpdate();
+      return;
+    }
+  }
+
+  function fullUpdate() {
+    const nextRand = rng(shapesGenSeed);
+    for (const sh of shapes) {
+      for (let i = 0; i < 6; ++i) {
+        nextRand();
+      }
+
+      const color = cfg.shapeColors[Math.floor(nextRand() * cfg.shapeColors.length)];
+      sh.color = color;
+
+      nextRand();
+    }
+  }
+}
+
+function buildShapes() {
+  const cfg = store.screensaver;
+  shapesGenSeed = cfg.seed ?? (Math.random() * 0x100000000) | 0;
+  const nextRand = rng(shapesGenSeed);
+
+  shapes = Array.from({ length: cfg.shapeCount }, () => {
+    const size = (cfg.minSize + nextRand() * (cfg.maxSize - cfg.minSize)) / 100;
+    const speed = (cfg.minSpeed + nextRand() * (cfg.maxSpeed - cfg.minSpeed)) / 100;
+    const angle = nextRand() * 2 * Math.PI;
+    return {
+      x: nextRand(),
+      y: nextRand(),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size,
+      horizontalOrientation: nextRand() < 0.5,
+      color: cfg.shapeColors[Math.floor(nextRand() * cfg.shapeColors.length)],
+      isCircle:
+        cfg.shapeType === "circle" ? nextRand() < 1 : cfg.shapeType === "rectangle" ? nextRand() < 0 : nextRand() < 0.5,
+    };
+  });
+}
+
+function drawFrame(t: number) {
+  const canvas = canvasPreview.value;
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const displayWidth = canvas.clientWidth;
+  const displayHeight = canvas.clientHeight;
+  const dpr = window.devicePixelRatio || 1;
+  const W = Math.floor(displayWidth * dpr);
+  const H = Math.floor(displayHeight * dpr);
+
+  if (canvas.width !== W || canvas.height !== H) {
+    canvas.width = W;
+    canvas.height = H;
+  }
+
+  const bg = store.screensaver.backgroundColor;
+  ctx.fillStyle = "#" + bg;
+  ctx.fillRect(0, 0, W, H);
+
+  for (const sh of shapes) {
+    const alpha = Math.round(sh.color.a * 2.55);
+    const alphaHex = alpha.toString(16).padStart(2, "0");
+    ctx.fillStyle = `#${sh.color.color}${alphaHex}`;
+
+    let w = sh.size;
+    let h = sh.isCircle ? w : w * (2 / 3);
+
+    if (!sh.horizontalOrientation) {
+      const temp = w;
+      w = h;
+      h = temp;
+    }
+
+    if (W > H) {
+      w *= H / W;
+    } else {
+      h *= W / H;
+    }
+
+    let x = sh.x + sh.vx * t;
+    let y = sh.y + sh.vy * t;
+
+    if (x + w / 2 > 1) {
+      x = 1 - w / 2;
+      sh.vx *= -1;
+    } else if (x - w / 2 < 0) {
+      x = w / 2;
+      sh.vx *= -1;
+    }
+
+    if (y + h / 2 > 1) {
+      y = 1 - h / 2;
+      sh.vy *= -1;
+    } else if (y - h / 2 < 0) {
+      y = h / 2;
+      sh.vy *= -1;
+    }
+
+    sh.x = x;
+    sh.y = y;
+
+    ctx.beginPath();
+
+    const drawX = x * W;
+    const drawY = y * H;
+    const drawW = w * W;
+    const drawH = h * H;
+
+    if (sh.isCircle) {
+      ctx.arc(drawX, drawY, drawW / 2, 0, 2 * Math.PI);
+    } else {
+      ctx.rect(drawX - drawW / 2, drawY - drawH / 2, drawW, drawH);
+    }
+
+    ctx.fill();
+  }
+}
+
+function animate(currentTime: number) {
+  if (!lastTime) lastTime = currentTime;
+  const deltaTime = (currentTime - lastTime) / 1000;
+  lastTime = currentTime;
+  drawFrame(deltaTime);
+  animId = requestAnimationFrame(animate);
+}
+
+function startPreview() {
+  buildShapes();
+  lastTime = 0;
+  cancelAnimationFrame(animId);
+  animId = requestAnimationFrame(animate);
+}
 
 const shapeTypes = [
   { value: "mixed", label: "Mixed" },
@@ -44,7 +262,7 @@ function addColor() {
       </template>
       <template #content>
         <span>
-          Generates an animated screen-saver clip (moving shapes, no bouncing) and uses it as a standalone video.
+          Generates an animated screen-saver clip (moving shapes with bouncing) and uses it as a standalone video.
         </span>
       </template>
     </Card>
@@ -186,7 +404,7 @@ function addColor() {
                 </div>
               </div>
               <div
-                class="flex flex-col h-150 overflow-y-auto p-3 gap-2 border rounded-md border-surface-200 dark:border-surface-700"
+                class="flex flex-col max-h-150 overflow-x-hidden overflow-y-auto p-3 gap-2 border rounded-md border-surface-200 dark:border-surface-700"
               >
                 <div class="flex items-center justify-between">
                   <div class="flex gap-2">
@@ -272,12 +490,14 @@ function addColor() {
           <template #title>
             <div class="flex items-center justify-between">
               <span>Preview</span>
-              <Button icon="pi pi-refresh" label="Refresh" severity="secondary" size="small" />
+              <Button @click="startPreview" icon="pi pi-refresh" label="Refresh" severity="secondary" size="small" />
             </div>
           </template>
           <template #content>
-            <div class="flex items-center justify-center w-full aspect-square border border-surface-200 dark:border-surface-700 rounded-md">
-              <span>JTBD</span>
+            <div
+              class="flex items-center justify-center overflow-hidden border border-surface-200 dark:border-surface-700 rounded-md"
+            >
+              <canvas ref="canvasPreview" class="w-full aspect-video" />
             </div>
           </template>
         </Card>

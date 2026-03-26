@@ -106,7 +106,7 @@ const qualityTagSeverity = computed(() => {
                 <label>FPS</label>
                 <Select
                   v-model="store.output.fps"
-                  :options="[24, 25, 30, 50, 60, 120]"
+                  :options="[24, 25, 30, 50, 60, 75, 90, 120, 144]"
                   checkmark
                   fluid
                   :highlightOnSelect="false"
