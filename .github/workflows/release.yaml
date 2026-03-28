@@ -1,0 +1,125 @@
+name: Release
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  should-release:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+  build:
+    needs: should-release
+    if: needs.should-release.outputs.run == 'true'
+    strategy:
+      matrix:
+        include:
+          - platform: ubuntu-latest
+            args: ""
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install build dependencies
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
+          sudo rm -rf /var/lib/apt/lists/*
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install Node.js dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload bundles
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundles-${{ matrix.platform }}
+          if-no-files-found: ignore
+          path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
+          retention-days: 7
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Download Linux bundles
+        uses: actions/download-artifact@v8
+        with:
+          name: bundles-ubuntu-latest
+          path: dist/linux
+      - name: Download Windows bundles
+        uses: actions/download-artifact@v8
+        with:
+          name: bundles-windows-latest
+          path: dist/windows
+      - name: Generate release version
+        id: version
+        run: echo "version=$(date +%-Y.%-m.%-d)+$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Create tag
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Foo Movie ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            dist/linux/*.AppImage
+            dist/linux/*.deb
+            dist/linux/*.rpm
+            dist/windows/*.msi
+            dist/windows/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
