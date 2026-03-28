@@ -43,7 +43,6 @@ jobs:
             libappindicator3-dev \
             libxdo-dev \
             libssl-dev \
-            libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf
           sudo rm -rf /var/lib/apt/lists/*
