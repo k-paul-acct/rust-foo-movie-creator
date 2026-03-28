@@ -115,10 +115,11 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: |
-            dist/linux/*.AppImage
-            dist/linux/*.deb
-            dist/linux/*.rpm
-            dist/windows/*.msi
-            dist/windows/*.exe
+            dist/linux/**/*.AppImage
+            dist/linux/**/*.deb
+            dist/linux/**/*.rpm
+            dist/windows/**/*.msi
+            dist/windows/**/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
