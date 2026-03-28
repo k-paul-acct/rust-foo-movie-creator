@@ -367,10 +367,6 @@ function addColor() {
                   </div>
                 </div>
               </div>
-              <div class="flex items-center mt-1 gap-2">
-                <ToggleSwitch v-model="store.screensaver.blurEdges" />
-                <label>Soft-edge shapes (blur) </label>
-              </div>
             </div>
           </template>
         </Card>

@@ -29,7 +29,6 @@ export const RESOLUTIONS = [
 export const CODECS = [
   { value: "h264", label: "H.264/AVC — widely supported" },
   { value: "hevc", label: "H.265/HEVC — improved compression" },
-  { value: "vp8", label: "VP8 — open, web-optimized" },
   { value: "vp9", label: "VP9 — open, web-optimized" },
   { value: "av1", label: "AV1 — open, high quality and compression" },
   // { value: "av2", label: "AV2 — open, high quality and compression" },
@@ -147,12 +146,14 @@ export const useAppStore = defineStore("app", () => {
     },
   );
 
+  function isValid() {
+    if (!output.value.outputPath) return false;
+    return true;
+  }
+
   function validate(): string[] {
     const errs: string[] = [];
     if (!output.value.outputPath) errs.push("No output path set.");
-    const activeImages = images.value.images.filter((i) => i.selected);
-    if (activeImages.length === 0 && !screensaver.value.enabled) errs.push("No images selected.");
-    if (effects.value.enabledEffects.length === 0 && activeImages.length > 0) errs.push("No effects enabled.");
     return errs;
   }
 
@@ -166,6 +167,7 @@ export const useAppStore = defineStore("app", () => {
     selectedImagesCount,
     effects,
     screensaver,
+    isValid,
     validate,
   };
 });

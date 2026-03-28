@@ -4,6 +4,8 @@ import { listen } from "@tauri-apps/api/event";
 import { save } from "@tauri-apps/plugin-dialog";
 import Button from "primevue/button";
 import ConfirmDialog from "primevue/confirmdialog";
+import Dialog from "primevue/dialog";
+import ProgressBar from "primevue/progressbar";
 import Tag from "primevue/tag";
 import Toast from "primevue/toast";
 import { computed, ref } from "vue";
@@ -37,13 +39,12 @@ function toggleDark() {
 
 const isGenerating = ref(false);
 const progress = ref<ProgressPayload>({
-  phase: "encoding",
-  currentFrame: 0,
-  totalFrames: 0,
+  phase: "generating",
   percentage: 0,
   message: "",
 });
 const errors = ref<string[]>([]);
+const isErrors = computed(() => errors.value.length != 0);
 
 async function pickOutputPath() {
   const path = await save({
@@ -59,15 +60,17 @@ function closeProgress() {
   }
 }
 
+function phaseLabel(p: ProgressPayload["phase"]) {
+  return { generating: "Generating frames", encoding: "Encoding video", done: "Complete", error: "Error" }[p];
+}
+
 async function generate() {
   errors.value = store.validate();
   if (errors.value.length) return;
 
   isGenerating.value = true;
   progress.value = {
-    phase: "encoding",
-    currentFrame: 0,
-    totalFrames: 0,
+    phase: "generating",
     percentage: 0,
     message: "Starting...",
   };
@@ -80,20 +83,21 @@ async function generate() {
     await invoke("generate_video", {
       config: {
         output_path: store.output.outputPath,
-        codec: store.output.codec,
+        codec: store.output.codec.value,
         width: store.output.resolution.width,
         height: store.output.resolution.height,
         fps: store.output.fps,
         quality: store.output.quality,
-        transition: store.output.transition,
-        transition_dur: store.output.duration,
-        images: store.images.images.filter((i) => i.selected).map((i) => i.path),
-        effects: store.effects.enabledEffects,
-        min_dur: store.effects.minDuration,
-        max_dur: store.effects.maxDuration,
-        total_dur: store.effects.targetTotalDuration,
-        seed: store.effects.seed,
-        no_repeat: store.effects.noRepeatConsecutive,
+        duration: store.output.duration,
+        seed: store.screensaver.seed,
+        // transition: store.output.transition,
+        // images: store.images.images.filter((i) => i.selected).map((i) => i.path),
+        // effects: store.effects.enabledEffects,
+        // min_dur: store.effects.minDuration,
+        // max_dur: store.effects.maxDuration,
+        // total_dur: store.effects.targetTotalDuration,
+        // seed: store.effects.seed,
+        // no_repeat: store.effects.noRepeatConsecutive,
         screensaver: store.screensaver.enabled
           ? {
               shape_type: store.screensaver.shapeType,
@@ -103,17 +107,15 @@ async function generate() {
               min_speed: store.screensaver.minSpeed,
               max_speed: store.screensaver.maxSpeed,
               bg_color: store.screensaver.backgroundColor,
-              colors: store.screensaver.shapeColors.map((c) => [c.color, c.a]),
-              blur_edges: store.screensaver.blurEdges,
-              seed: store.screensaver.seed,
+              colors: store.screensaver.shapeColors.map((c) => {
+                return { color: c.color, alpha: c.a };
+              }),
             }
           : null,
       },
     });
     progress.value = {
       phase: "done",
-      currentFrame: 0,
-      totalFrames: 0,
       percentage: 100,
       message: "Video created successfully",
     };
@@ -121,8 +123,6 @@ async function generate() {
     const msg = e instanceof Error ? e.message : String(e);
     progress.value = {
       phase: "error",
-      currentFrame: 0,
-      totalFrames: 0,
       percentage: 0,
       message: msg,
     };
@@ -202,6 +202,76 @@ async function cancel() {
           </Transition>
         </RouterView>
       </main>
+      <footer
+        class="flex flex-wrap items-center w-full mt-auto px-6 py-3 gap-4 border-t border-surface-200 dark:border-surface-700"
+      >
+        <div class="flex-1 min-w-32">
+          <div class="text-sm text-muted-color truncate">
+            <span v-if="store.output.outputPath">Output: {{ store.output.outputPath }}</span>
+            <span v-else>No output path selected</span>
+          </div>
+        </div>
+        <div class="flex flex-wrap w-full sm:w-auto gap-4">
+          <Button
+            class="w-full sm:w-auto"
+            icon="pi pi-folder-open"
+            size="small"
+            label="Output Path"
+            severity="secondary"
+            @click="pickOutputPath"
+          />
+          <Button
+            class="w-full sm:w-auto"
+            size="small"
+            icon="pi pi-play"
+            label="Generate Video"
+            @click="generate"
+            :disabled="!store.isValid() || isGenerating"
+          />
+          <Dialog v-model:visible="isErrors" modal class="flex flex-col min-w-96 max-w-10/12">
+            <template #header>
+              <div class="inline-flex items-center justify-center gap-2">
+                <i class="text-2xl! text-red-500 pi pi-exclamation-triangle" />
+                <span class="font-bold text-2xl whitespace-nowrap">Error</span>
+              </div>
+            </template>
+            <div>
+              <span>One or more errors occurred:</span>
+              <ul>
+                <li v-for="err in errors" :key="err">• {{ err }}</li>
+              </ul>
+            </div>
+            <template #footer>
+              <Button label="Close" severity="secondary" @click="errors = []" autofocus />
+            </template>
+          </Dialog>
+          <Dialog v-model:visible="isGenerating" modal class="flex flex-col w-96 max-w-10/12">
+            <template #header>
+              <div class="inline-flex items-center justify-center gap-2">
+                <span class="font-bold text-2xl whitespace-nowrap">{{ phaseLabel(progress.phase) }}</span>
+              </div>
+            </template>
+            <div class="flex flex-col gap-3">
+              <span>{{ progress.message }}</span>
+              <ProgressBar
+                :mode="progress.phase == 'encoding' ? 'indeterminate' : 'determinate'"
+                :value="progress.percentage"
+              />
+            </div>
+            <template #footer>
+              <Button
+                v-if="progress.phase === 'encoding' || progress.phase === 'generating'"
+                severity="danger"
+                @click="cancel"
+                >Cancel
+              </Button>
+              <Button v-else @click="closeProgress">
+                {{ progress.phase === "done" ? "Close" : "Dismiss" }}
+              </Button>
+            </template>
+          </Dialog>
+        </div>
+      </footer>
     </div>
 
     <Toast position="top-right" />
@@ -332,8 +402,8 @@ async function cancel() {
 
 .main-area {
   display: flex;
-  flex: 1;
   flex-direction: column;
+  width: 100%;
   overflow: hidden;
 }
 

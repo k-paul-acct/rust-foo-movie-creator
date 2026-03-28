@@ -95,9 +95,7 @@ export interface ScreensaverConfig {
 }
 
 export interface ProgressPayload {
-  phase: "encoding" | "done" | "error";
-  currentFrame: number;
-  totalFrames: number;
+  phase: "generating" | "encoding" | "done" | "error";
   percentage: number;
   message: string;
 }

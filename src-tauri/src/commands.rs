@@ -1,30 +1,30 @@
 use serde::{Deserialize, Serialize};
-use std::{sync::{
-    Arc, Mutex, atomic::{AtomicBool, Ordering}
-}, thread, time::Duration};
+use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, State};
+use tokio_util::sync::CancellationToken;
 
-use crate::ffmpeg::{ffmpeg_version, run_generation, ProgressReporter};
+use crate::ffmpeg::{ProgressReporter, ffmpeg_version, run_generation};
 
 pub struct GenerationState {
-    pub cancelled: Arc<AtomicBool>,
+    pub ct: CancellationToken,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ScreensaverShapeColor {
+    pub color: String,
+    pub alpha: u32,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ScreensaverConfig {
-    pub duration: f32,
     pub shape_type: String,
     pub shape_count: u32,
     pub min_size: u32,
     pub max_size: u32,
     pub min_speed: u32,
     pub max_speed: u32,
-    pub bg_r: u8,
-    pub bg_g: u8,
-    pub bg_b: u8,
-    pub colors: Vec<[u8; 4]>,
-    pub blur_edges: bool,
-    pub seed: Option<u32>,
+    pub bg_color: String,
+    pub colors: Vec<ScreensaverShapeColor>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -35,24 +35,23 @@ pub struct GenerateConfig {
     pub height: u32,
     pub fps: u32,
     pub quality: u32,
-    pub transition: String,
-    pub transition_dur: f32,
-    pub images: Vec<String>,
-    pub effects: Vec<String>,
-    pub min_dur: f32,
-    pub max_dur: f32,
-    pub total_dur: Option<f32>,
+    pub duration: f32,
     pub seed: Option<u32>,
-    pub no_repeat: bool,
+    // pub transition: String,
+    // pub images: Vec<String>,
+    // pub effects: Vec<String>,
+    // pub min_dur: f32,
+    // pub max_dur: f32,
+    // pub total_dur: Option<f32>,
+    // pub seed: Option<u32>,
+    // pub no_repeat: bool,
     pub screensaver: Option<ScreensaverConfig>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ProgressPayload {
     pub phase: String,
-    pub current_frame: u32,
-    pub total_frames: u32,
-    pub percentage: f32,
+    pub percentage: u32,
     pub message: String,
 }
 
@@ -61,14 +60,14 @@ pub type SharedGenerationState = Mutex<GenerationState>;
 impl Default for GenerationState {
     fn default() -> Self {
         Self {
-            cancelled: Arc::new(AtomicBool::new(false)),
+            ct: CancellationToken::new(),
         }
     }
 }
 
 #[tauri::command]
-pub fn get_ffmpeg_version() -> Result<String, String> {
-    ffmpeg_version().map_err(|e| e.to_string())
+pub async fn get_ffmpeg_version() -> Result<String, String> {
+    ffmpeg_version().await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -96,49 +95,25 @@ pub async fn generate_video(
     config: GenerateConfig,
     state: State<'_, SharedGenerationState>,
 ) -> Result<(), String> {
-    thread::sleep(Duration::from_secs(10));
-
-    let cancelled = {
-        let mut gs = state.lock().map_err(|e| e.to_string())?;
-        gs.cancelled = Arc::new(AtomicBool::new(false));
-        Arc::clone(&gs.cancelled)
+    let ct = {
+        let gs = state.lock().map_err(|e| e.to_string())?;
+        gs.ct.clone()
     };
 
-    let app_clone = app.clone();
-    let cancelled_clone = Arc::clone(&cancelled);
+    let mut reporter = ProgressReporter::from_callback(Box::new(move |stage, pct, msg| {
+        _ = app.emit(
+            "video-progress",
+            ProgressPayload {
+                phase: stage.to_string(),
+                percentage: pct,
+                message: msg.to_string(),
+            },
+        );
+    }));
 
-    tokio::task::spawn_blocking(move || {
-        let reporter = ProgressReporter {
-            callback: Box::new(move |cur, total, pct, msg| {
-                let _ = app_clone.emit(
-                    "video-progress",
-                    ProgressPayload {
-                        phase: "encoding".to_string(),
-                        current_frame: cur,
-                        total_frames: total,
-                        percentage: pct,
-                        message: msg.to_string(),
-                    },
-                );
-            }),
-        };
-
-        run_generation(&config, &reporter, cancelled_clone)
-    })
-    .await
-    .map_err(|e| e.to_string())?
-    .map_err(|e| e.to_string())?;
-
-    let _ = app.emit(
-        "video-progress",
-        ProgressPayload {
-            phase: "done".to_string(),
-            current_frame: 0,
-            total_frames: 0,
-            percentage: 100.0,
-            message: "Done!".to_string(),
-        },
-    );
+    run_generation(&config, &mut reporter, ct)
+        .await
+        .map_err(|e| e.to_string())?;
 
     Ok(())
 }
@@ -146,6 +121,6 @@ pub async fn generate_video(
 #[tauri::command]
 pub fn cancel_generation(state: State<'_, SharedGenerationState>) -> Result<(), String> {
     let gs = state.lock().map_err(|e| e.to_string())?;
-    gs.cancelled.store(true, Ordering::SeqCst);
+    gs.ct.cancel();
     Ok(())
 }
