@@ -163,54 +163,40 @@ function drawFrame(t: number) {
     const alphaHex = alpha.toString(16).padStart(2, "0");
     ctx.fillStyle = `#${sh.color.color}${alphaHex}`;
 
-    let w = sh.size;
-    let h = sh.isCircle ? w : w * (2 / 3);
+    const unit = Math.min(W, H);
+    const size = sh.size * unit;
+    const [w, h] = sh.isCircle ? [size, size] : sh.horizontalOrientation ? [size, size * (2 / 3)] : [size * (2 / 3), size];
 
-    if (!sh.horizontalOrientation) {
-      const temp = w;
-      w = h;
-      h = temp;
-    }
+    let dx = sh.vx * t * unit;
+    let dy = sh.vy * t * unit;
+    let x = sh.x * W + dx;
+    let y = sh.y * H + dy;
 
-    if (W > H) {
-      w *= H / W;
-    } else {
-      h *= W / H;
-    }
-
-    let x = sh.x + sh.vx * t;
-    let y = sh.y + sh.vy * t;
-
-    if (x + w / 2 > 1) {
-      x = 1 - w / 2;
+    if (x + w / 2 > W) {
+      x = W - w / 2;
       sh.vx *= -1;
     } else if (x - w / 2 < 0) {
       x = w / 2;
       sh.vx *= -1;
     }
 
-    if (y + h / 2 > 1) {
-      y = 1 - h / 2;
+    if (y + h / 2 > H) {
+      y = H - h / 2;
       sh.vy *= -1;
     } else if (y - h / 2 < 0) {
       y = h / 2;
       sh.vy *= -1;
     }
 
-    sh.x = x;
-    sh.y = y;
+    sh.x = x / W;
+    sh.y = y / H;
 
     ctx.beginPath();
 
-    const drawX = x * W;
-    const drawY = y * H;
-    const drawW = w * W;
-    const drawH = h * H;
-
     if (sh.isCircle) {
-      ctx.arc(drawX, drawY, drawW / 2, 0, 2 * Math.PI);
+      ctx.arc(x, y, w / 2, 0, 2 * Math.PI);
     } else {
-      ctx.rect(drawX - drawW / 2, drawY - drawH / 2, drawW, drawH);
+      ctx.rect(x - w / 2, y - h / 2, w, h);
     }
 
     ctx.fill();
@@ -490,10 +476,8 @@ function addColor() {
             </div>
           </template>
           <template #content>
-            <div
-              class="flex items-center justify-center overflow-hidden border border-surface-200 dark:border-surface-700 rounded-md"
-            >
-              <canvas ref="canvasPreview" class="w-full aspect-video" />
+            <div class="flex overflow-hidden border border-surface-200 dark:border-surface-700 rounded-md">
+              <canvas ref="canvasPreview" class="w-full aspect-square md:aspect-2/1" />
             </div>
           </template>
         </Card>

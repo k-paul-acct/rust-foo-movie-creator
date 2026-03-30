@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Configuration from "./views/Configuration.vue";
-import Screensaver from "./views/Screensaver.vue";
 
 const routes = [
   {
@@ -10,13 +8,13 @@ const routes = [
   {
     path: "/configuration",
     name: "configuration",
-    component: Configuration,
+    component: () => import("./views/Configuration.vue"),
     meta: { title: "Configuration", icon: "pi-cog" },
   },
   {
     path: "/screensaver",
     name: "screensaver",
-    component: Screensaver,
+    component: () => import("./views/Screensaver.vue"),
     meta: { title: "Screensaver", icon: "pi-desktop" },
   },
 ];

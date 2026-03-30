@@ -9,7 +9,7 @@ import Select from "primevue/select";
 import Slider from "primevue/slider";
 import Tag from "primevue/tag";
 import { computed, onMounted, ref } from "vue";
-import { CODECS, RESOLUTIONS, useAppStore } from "../stores/app";
+import { CODECS, useAppStore } from "../stores/app";
 
 interface DrawerSection {
   title: string;
@@ -84,12 +84,36 @@ const qualityTagSeverity = computed(() => {
                 <label>Resolution</label>
                 <Select
                   v-model="store.output.resolution"
-                  :options="RESOLUTIONS"
+                  :options="store.resolutions"
                   optionLabel="label"
                   checkmark
                   fluid
                   :highlightOnSelect="false"
                 />
+              </div>
+              <div class="flex flex-col gap-4 md:flex-row">
+                <div class="flex flex-col w-full">
+                  <label>Width</label>
+                  <InputNumber
+                    v-model="store.output.resolution.width"
+                    :disabled="store.output.resolution.label !== 'Custom'"
+                    fluid
+                    mode="decimal"
+                    showButtons
+                    :min="1"
+                  />
+                </div>
+                <div class="flex flex-col w-full">
+                  <label>Height</label>
+                  <InputNumber
+                    v-model="store.output.resolution.height"
+                    :disabled="store.output.resolution.label !== 'Custom'"
+                    fluid
+                    mode="decimal"
+                    showButtons
+                    :min="1"
+                  />
+                </div>
               </div>
               <div class="flex flex-col">
                 <label>Codec</label>

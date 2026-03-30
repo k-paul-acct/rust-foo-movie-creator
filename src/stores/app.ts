@@ -17,15 +17,6 @@ export const EFFECT_ENTRIES: EffectEntry[] = [
   { name: "ken_burns", label: "Ken Burns", enabled: true },
 ];
 
-export const RESOLUTIONS = [
-  { width: 3840, height: 2160, label: "4K UHD (3840×2160)" },
-  { width: 2560, height: 1440, label: "QHD (2560×1440)" },
-  { width: 1920, height: 1080, label: "Full HD (1920×1080)" },
-  { width: 1280, height: 720, label: "HD (1280×720)" },
-  { width: 854, height: 480, label: "FWVGA (854×480)" },
-  { width: 640, height: 360, label: "nHD (640×360)" },
-];
-
 export const CODECS = [
   { value: "h264", label: "H.264/AVC — widely supported" },
   { value: "hevc", label: "H.265/HEVC — improved compression" },
@@ -61,15 +52,28 @@ export const useAppStore = defineStore("app", () => {
   const ffmpegVersion = ref<string | null>();
   const ffmpegError = ref<string | null>();
 
+  const defaultResolution = { width: 1920, height: 1080, label: "Full HD (1920×1080)" };
+  const customResolution = { width: 1920, height: 1080, label: "Custom" };
+
   const output = ref<OutputConfig>({
     outputPath: "",
     codec: CODECS[0],
-    resolution: RESOLUTIONS[2],
+    resolution: defaultResolution,
     fps: 30,
     quality: 23,
     transition: "fade",
     duration: 30,
   });
+
+  const resolutions = ref([
+    customResolution,
+    { width: 3840, height: 2160, label: "4K UHD (3840×2160)" },
+    { width: 2560, height: 1440, label: "QHD (2560×1440)" },
+    defaultResolution,
+    { width: 1280, height: 720, label: "HD (1280×720)" },
+    { width: 854, height: 480, label: "FWVGA (854×480)" },
+    { width: 640, height: 360, label: "nHD (640×360)" },
+  ]);
 
   const images = ref<ImagesConfig>({
     sourceDir: null,
@@ -163,6 +167,7 @@ export const useAppStore = defineStore("app", () => {
     ffmpegVersion,
     ffmpegError,
     output,
+    resolutions,
     images,
     selectedImagesCount,
     effects,
